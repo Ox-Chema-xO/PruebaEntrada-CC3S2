@@ -1,5 +1,5 @@
 import pytest
-from app.trivia import Question
+from app.models.question import Question
 
 def test_question_correct_answer():
     question = Question("What is 2 + 2?", ["1", "2", "3", "4"], "4")

@@ -15,3 +15,16 @@ class Quiz:
             self.current_question_index += 1
             return question
         return None
+    
+    def answer_question(self, question, answer):
+        if question.is_correct(answer):
+            self.correct_answers += 1
+            return True
+        else:
+            self.incorrect_answers += 1
+            return False
+            
+    def reset(self):
+        self.current_question_index = 0
+        self.correct_answers = 0
+        self.incorrect_answers = 0

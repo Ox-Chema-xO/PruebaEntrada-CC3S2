@@ -3,6 +3,16 @@
 Todas las modificaciones importantes de este proyecto se documentarán en este archivo.
 ---
 
+## [v1.0-day5] - 2025-04-13
+
+### Agregado
+- Interfaz de consola:
+    Se refino la presentación de preguntas y respuestas en la consola.
+    Se agrego mensajes de bienvenida y resumen final detallado.
+- Características adicionales:
+    Se incorporo niveles de dificultad (por ejemplo, ajustar la selección de preguntas según el rendimiento).
+---
+
 ## [v1.0-day4] - 2025-04-12
 
 ### Agregado

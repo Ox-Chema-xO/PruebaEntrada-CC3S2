@@ -1,2 +1,4 @@
-from .question import Question
-from .quiz import Quiz
+from app.models.question import Question
+from app.models.quiz import Quiz
+
+__all__ = ['Question', 'Quiz']

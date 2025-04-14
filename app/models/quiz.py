@@ -30,3 +30,7 @@ class Quiz:
         self.current_question_index = 0
         self.correct_answers = 0
         self.incorrect_answers = 0
+        
+    def clear_questions(self):
+        self.questions = []
+        self.reset()

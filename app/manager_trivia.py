@@ -4,15 +4,23 @@ from app.models import Question, Quiz
 
 class TriviaManager:
     """
-    Clase controladora de la lógica del juego Trivia
-    Ahora incluye gestión de niveles de dificultad
+    Clase controladora de la lógica del juego Trivia con gestión de niveles de dificultad.
+    
+    Reglas modificadas:
+      - El juego siempre es de 10 preguntas.
+      - Se inicia en nivel "fácil".
+      - Si el usuario responde 3 preguntas correctas consecutivas, la dificultad sube:
+            "fácil" -> "normal" y "normal" -> "difícil".
+      - Las respuestas incorrectas no modifican la dificultad.
     """
     def __init__(self):
         self.quiz = Quiz()
         self.total_questions = 0
-        self.current_difficulty = 'normal'  # Dificultad inicial
+        self.current_difficulty = 'fácil'  # Nivel inicial modificado a "fácil"
         self.consecutive_correct = 0  # Contador de respuestas correctas consecutivas
-        self.consecutive_incorrect = 0  # Contador de respuestas incorrectas consecutivas
+        self.correct_count = 0
+        self.incorrect_count = 0
+        # Diccionario que agrupa las preguntas por dificultad
         self.questions_by_difficulty = {
             'fácil': [],
             'normal': [],
@@ -125,63 +133,44 @@ class TriviaManager:
             )
             self.questions_by_difficulty[difficulty].append(question)
         
-        # Seleccionar las primeras preguntas según la dificultad inicial
-        self._select_questions_by_difficulty()
+        # Seleccionar las preguntas según la dificultad actual
+        self.select_questions_by_difficulty()
 
-    def _select_questions_by_difficulty(self) -> None:
+    def select_questions_by_difficulty(self) -> None:
         """
-        Selecciona preguntas para el quiz basadas en la dificultad actual
+        Selecciona preguntas para el quiz basadas exclusivamente en la dificultad actual.
         """
-        # Limpiar completamente las preguntas actuales y reiniciar contadores
+        # Reiniciar el quiz
         self.quiz.clear_questions()
+        # Restaurar los contadores de respuestas
+        self.quiz.correct_answers = self.correct_count
+        self.quiz.incorrect_answers = self.incorrect_count
         
-        # Seleccionar preguntas de la dificultad actual y adyacentes
-        available_questions = []
+        # Se utiliza únicamente la lista correspondiente a la dificultad actual
+        available_questions = self.questions_by_difficulty[self.current_difficulty][:]
         
-        # Siempre incluimos algunas preguntas de la dificultad actual
-        if self.questions_by_difficulty[self.current_difficulty]:
-            available_questions.extend(self.questions_by_difficulty[self.current_difficulty])
-        
-        # Si la dificultad actual es 'normal', añadimos algunas fáciles y difíciles
-        if self.current_difficulty == 'normal':
-            available_questions.extend(self.questions_by_difficulty['fácil'])
-            available_questions.extend(self.questions_by_difficulty['difícil'])
-        # Si es 'fácil', añadimos algunas normales
-        elif self.current_difficulty == 'fácil':
-            available_questions.extend(self.questions_by_difficulty['normal'])
-        # Si es 'difícil', añadimos algunas normales
-        elif self.current_difficulty == 'difícil':
-            available_questions.extend(self.questions_by_difficulty['normal'])
-        
-        # Mezclar las preguntas disponibles y seleccionar hasta 10
         random.shuffle(available_questions)
         selected_questions = available_questions[:10]
         
-        # Añadir las preguntas seleccionadas al quiz
         for question in selected_questions:
-            self.quiz.add_question(question)   
+            self.quiz.add_question(question)
+
     
     def adjust_difficulty(self) -> None:
         """
-        Ajusta la dificultad según el rendimiento del jugador
+        Ajusta la dificultad en función del rendimiento del jugador.
+        Si se contestan 3 preguntas correctas consecutivas, se aumenta el nivel,
+        pasando de "fácil" a "normal" y de "normal" a "difícil" (nivel máximo).
+        Las respuestas incorrectas no modifican la dificultad.
         """
-        # Si el jugador acierta varias preguntas consecutivas, aumentamos la dificultad
         if self.consecutive_correct >= 3:
             if self.current_difficulty == 'fácil':
                 self.current_difficulty = 'normal'
             elif self.current_difficulty == 'normal':
                 self.current_difficulty = 'difícil'
+            # Si ya está en "difícil", no se aumenta más
             self.consecutive_correct = 0
-            self._select_questions_by_difficulty()
-        
-        # Si el jugador falla varias preguntas consecutivas, reducimos la dificultad
-        elif self.consecutive_incorrect >= 2:
-            if self.current_difficulty == 'difícil':
-                self.current_difficulty = 'normal'
-            elif self.current_difficulty == 'normal':
-                self.current_difficulty = 'fácil'
-            self.consecutive_incorrect = 0
-            self._select_questions_by_difficulty()
+            self.select_questions_by_difficulty()
 
     def has_more_questions(self) -> bool:
         """
@@ -194,61 +183,63 @@ class TriviaManager:
 
     def get_next_question(self) -> Optional[Question]:
         """
-        Pasar a la siguiente pregunta
+        Pasar a la siguiente pregunta.
 
         Returns:
-            Optional[Question]: Siguiente pregunta, o None si no hay más preguntas
+            Optional[Question]: Siguiente pregunta, o None si no hay más preguntas.
         """        
         return self.quiz.get_next_question()
         
     def answer_question(self, question: Question, answer: str) -> bool:
         """
-        Proceso en el cual el jugador responde la pregunta
-        Actualiza contadores de respuestas consecutivas y ajusta la dificultad
-        
+        Procesa la respuesta del jugador a la pregunta,
+        actualiza el contador de respuestas consecutivas y ajusta la dificultad.
+
         Args:
-            question (Question): La pregunta a responder
-            answer (str): Respuesta del usuario
+            question (Question): La pregunta a responder.
+            answer (str): Respuesta del usuario.
             
         Returns:
-            bool: True si la respuesta es correcta, Falso en caso contrario.
+            bool: True si la respuesta es correcta, False en caso contrario.
         """
         self.total_questions += 1
         is_correct = self.quiz.answer_question(question, answer)
         
         if is_correct:
             self.consecutive_correct += 1
-            self.consecutive_incorrect = 0
+            self.correct_count += 1
         else:
-            self.consecutive_incorrect += 1
+            # En respuesta incorrecta, se reinicia el contador de respuestas correctas consecutivas
             self.consecutive_correct = 0
+            self.incorrect_count += 1
         
-        # Ajustar la dificultad basada en el rendimiento
+        # Ajustar la dificultad según el rendimiento
         self.adjust_difficulty()
         
         return is_correct
 
     def get_score(self) -> dict:
         """
-        Mostrar la puntuación del jugador
+        Muestra la puntuación del jugador.
         
         Returns:
-            dict: Diccionario que muestra del total de preguntas, cuántas fueron contestadas correcta e incorrectamente,
-                 y la dificultad actual
+            dict: Diccionario con el total de preguntas, respuestas correctas,
+                  respuestas incorrectas, la dificultad actual y la precisión.
         """
         return {
             "total_questions": self.total_questions,
-            "correct_answers": self.quiz.correct_answers,
-            "incorrect_answers": self.quiz.incorrect_answers,
+            "correct_answers": self.correct_count,
+            "incorrect_answers": self.incorrect_count,
             "current_difficulty": self.current_difficulty,
             "accuracy": round((self.quiz.correct_answers / self.total_questions) * 100, 2) if self.total_questions > 0 else 0
         }
         
     def reset_game(self) -> None:
-        """Restaurar el juego"""
+        """Restaurar el juego al estado inicial."""
         self.total_questions = 0
-        self.current_difficulty = 'normal'
+        self.current_difficulty = 'fácil'
         self.consecutive_correct = 0
-        self.consecutive_incorrect = 0
-        # Limpia las preguntas y reinicia los contadores
-        self._select_questions_by_difficulty()
+        self.correct_count = 0
+        self.incorrect_count = 0
+        # Reiniciar las preguntas según el nivel actual
+        self.select_questions_by_difficulty()

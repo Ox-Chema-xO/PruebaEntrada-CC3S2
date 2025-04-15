@@ -1,7 +1,18 @@
 # Changelog
 
 Todas las modificaciones importantes de este proyecto se documentarán en este archivo.
+
 ---
+## [v1.0-day6] - 2025-04-14 (part1) & 2025-04-15 (part2)
+
+### Agregado
+- CI/CD:
+    Configuracion GitHub Actions para ejecutar pruebas unitarias e integración.
+    Se incluyo análisis de código estático (SonarQube/SonarCloud) y pruebas de integración para la API de FastAPI.
+- Pruebas de integración:
+    Se implemento pruebas de integración utilizando httpx y TestClient de FastAPI.
+- Documentación del pipeline:
+- Se creo el archivo de workflow (.github/workflows/ci.yml).
 
 ## [v1.0-day5] - 2025-04-13
 

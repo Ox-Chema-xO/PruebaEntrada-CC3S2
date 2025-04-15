@@ -1,0 +1,112 @@
+name: Trivia Game CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: trivia
+          POSTGRES_DB: trivia_test_db
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+      
+      - name: Create test directories
+        run: mkdir -p tests logs
+      
+      - name: Initialize PostgreSQL test database
+        run: |
+          PGPASSWORD=trivia psql -h localhost -U postgres -d trivia_test_db -c "CREATE SCHEMA IF NOT EXISTS public;"
+          PGPASSWORD=trivia psql -h localhost -U postgres -d trivia_test_db -f sql/schema.sql
+          PGPASSWORD=trivia psql -h localhost -U postgres -d trivia_test_db -f sql/seed.sql
+      
+      - name: Run unit tests
+        run: |
+          pytest tests/test_models.py tests/test_manager.py --cov=app --cov-report=xml
+        env:
+          DATABASE_URL: postgresql://postgres:trivia@localhost:5432/trivia_test_db
+      
+      - name: Run integration tests
+        run: |
+          pytest tests/test_api.py --cov=app --cov-append --cov-report=xml
+        env:
+          DATABASE_URL: postgresql://postgres:trivia@localhost:5432/trivia_test_db
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          fail_ci_if_error: true
+  
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install linting dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black
+      
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      
+      - name: Check formatting with black
+        run: |
+          black --check app tests
+  
+  sonarcloud:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=trivia-game-python
+            -Dsonar.organization=your-organization
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.sources=app
+            -Dsonar.tests=tests
+            -Dsonar.python.version=3.12

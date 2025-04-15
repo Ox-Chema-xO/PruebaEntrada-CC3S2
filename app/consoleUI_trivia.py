@@ -1,14 +1,14 @@
-from app.models import Question
-from app.manager_trivia import TriviaManager
+from app.db_models import Question
+from app.manager_trivia import TriviaManagerDB
 import os
 import time
 
-class ConsoleUI:
+class ConsoleUIDB:
     """
     ConsoleUI maneja la interfaz de usuario para el juego.
-    Versión mejorada con formateo y presentación acorde a los cambios en el controlador.
+    Versión adaptada para trabajar con la base de datos PostgreSQL.
     """   
-    def __init__(self, trivia_manager: TriviaManager):
+    def __init__(self, trivia_manager: TriviaManagerDB):
         self.trivia_manager = trivia_manager
         # Limpiar pantalla al inicio
         self._clear_screen()
@@ -44,8 +44,11 @@ class ConsoleUI:
             question_number (int): Número de la pregunta.
             max_questions (int): Total de preguntas del juego.
         """
+        # Obtener el nombre de la dificultad desde la relación
+        difficulty_name = question.difficulty.name
+        
         print("\n" + "-"*60)
-        print(f"| PREGUNTA {question_number}/{max_questions} | DIFICULTAD: {question.difficulty.upper()} |")
+        print(f"| PREGUNTA {question_number}/{max_questions} | DIFICULTAD: {difficulty_name.upper()} |")
         print("-"*60)
         
         print(f"\n>> {question.description}")
@@ -141,23 +144,8 @@ class ConsoleUI:
         print("|" + " "*8 + "Vuelve pronto para más desafíos." + " "*15 + "|")
         print("="*60)
     
-    def display_progress(self) -> None:
-        """Mostrar el progreso actual del juego basado en la puntuación."""
-        score = self.trivia_manager.get_score()
-        total_questions = len(self.trivia_manager.quiz.questions)
-        current_question = self.trivia_manager.quiz.current_question_index
-        
-        print("\n" + "-"*60)
-        print(">> PROGRESO ACTUAL:")
-        print(f"  • Pregunta: {current_question}/{total_questions}")
-        print(f"  • Correctas: {score['correct_answers']}")
-        print(f"  • Incorrectas: {score['incorrect_answers']}")
-        print(f"  • Dificultad: {score['current_difficulty'].upper()}")
-        print("-"*60)
-        # Espera breve para que el usuario se pueda poner al día con la información
-        time.sleep(1.5)
-    
     def run_game(self) -> None:
+        """Ejecuta el juego completo"""
         self.display_welcome()
         question_number = 1
         max_questions = 10  
@@ -176,8 +164,6 @@ class ConsoleUI:
                     self.display_difficulty_change(self.trivia_manager.current_difficulty)
                     previous_difficulty = self.trivia_manager.current_difficulty
                 
-                # ELIMINADO: Ya no mostramos el progreso cada tres preguntas
-                # Se elimina el bloque que llamaba a self.display_progress()
-                
                 question_number += 1
+                
         self.display_game_over()

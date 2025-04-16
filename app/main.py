@@ -1,9 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
-from app.db_models import get_db, create_tables
+from app.db_models import get_db, create_tables, Question, DifficultyLevel, Quiz, QuizQuestion  # Importar Question
 from app.manager_trivia import TriviaManagerDB
 from app.consoleUI_trivia import ConsoleUIDB
 

@@ -10,7 +10,7 @@ class ConsoleUIDB:
     """   
     def __init__(self, trivia_manager: TriviaManagerDB):
         self.trivia_manager = trivia_manager
-        # Limpiar pantalla al inicio
+ 
         self._clear_screen()
     
     def _clear_screen(self):
@@ -37,14 +37,13 @@ class ConsoleUIDB:
     
     def display_question(self, question: Question, question_number: int, max_questions: int) -> None:
         """
-        Mostrar la pregunta con formato
+        Mostrar preguntas con mejor aspecto visual
         
         Args:
             question (Question): La pregunta a responder.
             question_number (int): Número de la pregunta.
             max_questions (int): Total de preguntas del juego.
         """
-        # Obtener el nombre de la dificultad desde la relación
         difficulty_name = question.difficulty.name
         
         print("\n" + "-"*60)
@@ -94,7 +93,6 @@ class ConsoleUIDB:
             print("- INCORRECTO. La respuesta correcta era: " + correct_answer)
             print("-"*60)
         
-        # Pausa para que el usuario pueda leer el resultado
         time.sleep(1.5)
         self._clear_screen()
     
@@ -159,7 +157,6 @@ class ConsoleUIDB:
                 is_correct = self.trivia_manager.answer_question(question, user_answer)
                 self.display_answer_result(is_correct, question.correct_answer)
                 
-                # Mostrar mensaje de cambio de dificultad en caso de haber ocurrido
                 if previous_difficulty != self.trivia_manager.current_difficulty:
                     self.display_difficulty_change(self.trivia_manager.current_difficulty)
                     previous_difficulty = self.trivia_manager.current_difficulty

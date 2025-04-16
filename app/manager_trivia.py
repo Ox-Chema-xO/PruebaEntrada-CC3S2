@@ -3,11 +3,12 @@ import random
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from app.db_models import Question, Quiz, QuizQuestion, DifficultyLevel
+from datetime import datetime
 
 class TriviaManagerDB:
     """
-    Clase controladora de la lógica del juego Trivia con gestión de niveles de dificultad.
-    Versión adaptada para trabajar con base de datos PostgreSQL.
+    Clase controladora de la lógica del juego Trivia con gestión de niveles de dificultad
+    Usando db
     
     Reglas:
       - El juego siempre es de 10 preguntas.
@@ -20,19 +21,16 @@ class TriviaManagerDB:
         self.db = db
         self.quiz = None
         self.total_questions = 0
-        self.current_difficulty = 'fácil'  # Nivel inicial
-        self.consecutive_correct = 0  # Contador de respuestas correctas consecutivas
+        self.current_difficulty = 'fácil'  
+        self.consecutive_correct = 0  
         self.current_question_index = 0
         
-        # Inicializar un nuevo quiz
         self._initialize_quiz()
 
     def _initialize_quiz(self):
         """Inicializa un nuevo quiz en la base de datos"""
-        # Obtener el ID del nivel de dificultad 'fácil'
         difficulty = self.db.query(DifficultyLevel).filter(DifficultyLevel.name == self.current_difficulty).first()
         
-        # Crear un nuevo quiz
         self.quiz = Quiz(
             current_difficulty_id=difficulty.id,
             consecutive_correct=0
@@ -41,36 +39,23 @@ class TriviaManagerDB:
         self.db.commit()
         self.db.refresh(self.quiz)
         
-        # Seleccionar preguntas según la dificultad actual
         self.select_questions_by_difficulty()
-
-    def load_questions(self):
-        """
-        Esta función se mantiene por compatibilidad, pero ya no es necesaria
-        ya que las preguntas se cargan desde la base de datos en el script seed.sql
-        """
-        pass
 
     def select_questions_by_difficulty(self):
         """
-        Selecciona preguntas para el quiz basadas exclusivamente en la dificultad actual.
+        Selecciona preguntas de acuerdo al nivel de dificultad que nos encontramos.
         """
-        # Obtener el nivel de dificultad actual
         difficulty = self.db.query(DifficultyLevel).filter(DifficultyLevel.name == self.current_difficulty).first()
         
-        # Obtener todas las preguntas de la dificultad actual
         available_questions = self.db.query(Question).filter(
             Question.difficulty_id == difficulty.id
         ).all()
         
-        # Seleccionar 10 preguntas aleatorias (o menos si no hay suficientes)
         random.shuffle(available_questions)
         selected_questions = available_questions[:10]
         
-        # Eliminar las preguntas anteriores del quiz actual
         self.db.query(QuizQuestion).filter(QuizQuestion.quiz_id == self.quiz.id).delete()
         
-        # Añadir las nuevas preguntas al quiz
         for i, question in enumerate(selected_questions):
             quiz_question = QuizQuestion(
                 quiz_id=self.quiz.id,
@@ -79,7 +64,6 @@ class TriviaManagerDB:
             )
             self.db.add(quiz_question)
         
-        # Actualizar el índice de pregunta actual
         self.current_question_index = 0
         self.db.commit()
     
@@ -94,7 +78,7 @@ class TriviaManagerDB:
             elif self.current_difficulty == 'normal':
                 self.current_difficulty = 'difícil'
             
-            # Actualizar el quiz en la base de datos
+            # Actualizar el quiz en la bd
             difficulty = self.db.query(DifficultyLevel).filter(
                 DifficultyLevel.name == self.current_difficulty
             ).first()
@@ -105,7 +89,7 @@ class TriviaManagerDB:
             
             self.db.commit()
             
-            # Seleccionar nuevas preguntas según la nueva dificultad
+            # Luego de haber ajustado la dificultados seleccionamos las nuevas preguntas
             self.select_questions_by_difficulty()
 
     def has_more_questions(self) -> bool:
@@ -115,7 +99,6 @@ class TriviaManagerDB:
         Returns:
             bool: True si hay más preguntas, False en caso contrario.
         """
-        # Contar cuántas preguntas tiene el quiz actual
         total_questions = self.db.query(QuizQuestion).filter(
             QuizQuestion.quiz_id == self.quiz.id
         ).count()
@@ -132,7 +115,6 @@ class TriviaManagerDB:
         if not self.has_more_questions():
             return None
         
-        # Obtener la siguiente pregunta del quiz
         quiz_question = self.db.query(QuizQuestion).filter(
             QuizQuestion.quiz_id == self.quiz.id,
             QuizQuestion.question_index == self.current_question_index
@@ -140,13 +122,11 @@ class TriviaManagerDB:
         
         if not quiz_question:
             return None
-        
-        # Obtener la pregunta completa
+
         question = self.db.query(Question).filter(
             Question.id == quiz_question.question_id
         ).first()
         
-        # Incrementar el índice de pregunta
         self.current_question_index += 1
         
         return question
@@ -162,13 +142,10 @@ class TriviaManagerDB:
         Returns:
             bool: True si la respuesta es correcta, False en caso contrario.
         """
-        # Incrementar el contador de preguntas totales
         self.total_questions += 1
         
-        # Verificar si la respuesta es correcta
         is_correct = question.is_correct(answer)
         
-        # Actualizar el quiz y la pregunta en la base de datos
         quiz_question = self.db.query(QuizQuestion).filter(
             QuizQuestion.quiz_id == self.quiz.id,
             QuizQuestion.question_id == question.id
@@ -179,7 +156,6 @@ class TriviaManagerDB:
             quiz_question.is_correct = is_correct
             quiz_question.answered_at = func.now()
         
-        # Actualizar contadores
         if is_correct:
             self.quiz.correct_answers += 1
             self.consecutive_correct += 1
@@ -190,8 +166,6 @@ class TriviaManagerDB:
             self.quiz.consecutive_correct = 0
         
         self.db.commit()
-        
-        # Ajustar la dificultad según el rendimiento
         self.adjust_difficulty()
         
         return is_correct
@@ -204,7 +178,6 @@ class TriviaManagerDB:
             dict: Diccionario con el total de preguntas, respuestas correctas,
                   respuestas incorrectas, la dificultad actual y la precisión.
         """
-        # Obtener la dificultad actual
         difficulty = self.db.query(DifficultyLevel).filter(
             DifficultyLevel.id == self.quiz.current_difficulty_id
         ).first()
@@ -222,11 +195,9 @@ class TriviaManagerDB:
         
     def reset_game(self) -> None:
         """Restaurar el juego al estado inicial."""
-        # Marcar el quiz actual como completado
-        self.quiz.completed_at = func.now()
+        self.quiz.completed_at = datetime.now()
         self.db.commit()
         
-        # Inicializar un nuevo quiz
         self.total_questions = 0
         self.current_difficulty = 'fácil'
         self.consecutive_correct = 0

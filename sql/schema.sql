@@ -6,14 +6,12 @@ DROP TABLE IF EXISTS quizzes CASCADE;
 DROP TABLE IF EXISTS questions CASCADE;
 DROP TABLE IF EXISTS difficulty_levels CASCADE;
 
--- Tabla para niveles de dificultad
 CREATE TABLE difficulty_levels (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
     description TEXT
 );
 
--- Tabla para almacenar las preguntas
 CREATE TABLE questions (
     id SERIAL PRIMARY KEY,
     description TEXT NOT NULL,
@@ -23,7 +21,6 @@ CREATE TABLE questions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla para almacenar quizzes
 CREATE TABLE quizzes (
     id SERIAL PRIMARY KEY,
     total_questions INTEGER DEFAULT 0,
@@ -35,7 +32,6 @@ CREATE TABLE quizzes (
     completed_at TIMESTAMP
 );
 
--- Tabla de relación entre quizzes y preguntas
 CREATE TABLE quiz_questions (
     id SERIAL PRIMARY KEY,
     quiz_id INTEGER REFERENCES quizzes(id) ON DELETE CASCADE,
@@ -46,7 +42,7 @@ CREATE TABLE quiz_questions (
     question_index INTEGER NOT NULL
 );
 
--- Índices para mejorar el rendimiento
+-- Mejorar el rendimiento
 CREATE INDEX idx_questions_difficulty_id ON questions(difficulty_id);
 CREATE INDEX idx_quizzes_difficulty_id ON quizzes(current_difficulty_id);
 CREATE INDEX idx_quiz_questions_quiz_id ON quiz_questions(quiz_id);

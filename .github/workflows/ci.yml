@@ -30,6 +30,43 @@ jobs:
         run: |
           docker cp $(docker-compose ps -q web):/project/coverage.xml ./coverage.xml
       
+      - name: Set up Python for security tools
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install Bandit
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit bandit-sarif-formatter
+      
+      - name: Run Bandit security scan
+        run: |
+          bandit -r app/ -f txt -o bandit-report.txt || true
+          echo "Bandit report:"
+          cat bandit-report.txt
+      
+      - name: Generate SARIF report for GitHub Security
+        run: |
+          bandit -r app/ -f sarif -o bandit-results.sarif || true
+      
+      - name: Upload SARIF report to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: bandit-results.sarif
+          wait-for-processing: true
+      
+      - name: Check for high severity issues
+        run: |
+          if grep -q "Issue: \[High\]" bandit-report.txt; then
+            echo "::warning::High severity security issues found!"
+            grep -n "Issue: \[High\]" bandit-report.txt
+            # Descomenta la siguiente línea si quieres que el pipeline falle en caso de problemas de alta severidad
+            # exit 1
+          else
+            echo "No high severity security issues found."
+          fi
+      
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:

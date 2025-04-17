@@ -3,6 +3,18 @@
 Todas las modificaciones importantes de este proyecto se documentarán en este archivo.
 
 ---
+## [v1.0-day7] - 2025-04-16 (part1) & 2025-04-17 (part2)
+
+### Agregado
+- Gestión de variables de entorno:
+    Se implemento un archivo .env para gestionar las credenciales sensibles.
+    Se ajusto la aplicación para cargar configuraciones mediante dotenv.
+- Seguridad:
+    Se agrego pruebas automatizadas de seguridad con Bandit.
+- Pruebas de carga:
+    Se configuro pruebas de rendimiento utilizando Locust.
+
+---
 ## [v1.0-day6] - 2025-04-14 (part1) & 2025-04-15 (part2)
 
 ### Agregado

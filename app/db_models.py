@@ -2,10 +2,9 @@ from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean, ARRAY
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.sql import func
-import os
 import time
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:trivia@db:5432/trivia_db")
+from app.config import DATABASE_URL
 
 def create_db_engine(url, max_retries=5, retry_interval=5):
     """Crea el motor de base de datos con reintentos en caso de error de conexión"""
@@ -40,6 +39,7 @@ class DifficultyLevel(Base):
     name = Column(String(50), unique=True, nullable=False)
     description = Column(Text, nullable=True)
     
+
     questions = relationship("Question", back_populates="difficulty")
     quizzes = relationship("Quiz", back_populates="current_difficulty")
 
@@ -54,6 +54,7 @@ class Question(Base):
     difficulty_id = Column(Integer, ForeignKey("difficulty_levels.id"))
     created_at = Column(TIMESTAMP, server_default=func.now())
     
+ 
     difficulty = relationship("DifficultyLevel", back_populates="questions")
     quiz_questions = relationship("QuizQuestion", back_populates="question")
     

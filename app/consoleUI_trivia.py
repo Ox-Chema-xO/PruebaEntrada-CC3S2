@@ -5,8 +5,7 @@ import time
 
 class ConsoleUIDB:
     """
-    ConsoleUI maneja la interfaz de usuario para el juego.
-    Versión adaptada para trabajar con la base de datos PostgreSQL.
+    ConsoleUI maneja la interfaz de usuario para el juego
     """   
     def __init__(self, trivia_manager: TriviaManagerDB):
         self.trivia_manager = trivia_manager
@@ -31,7 +30,7 @@ class ConsoleUIDB:
         print(f"  - Nivel inicial: {self.trivia_manager.current_difficulty.upper()}")
         print("  - ¡Responde correctamente para desbloquear preguntas más difíciles!")
         
-        print("\n>> Presiona ENTER para comenzar la aventura...")
+        print("\n>> Presiona ENTER para comenzar el juego...")
         input()
         self._clear_screen()
     

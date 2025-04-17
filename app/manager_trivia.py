@@ -7,15 +7,14 @@ from datetime import datetime
 
 class TriviaManagerDB:
     """
-    Clase controladora de la lógica del juego Trivia con gestión de niveles de dificultad
-    Usando db
+    Clase controladora de la lógica del juego Trivia con gestión de niveles de dificultad con db
     
     Reglas:
-      - El juego siempre es de 10 preguntas.
+      - Son 10 preguntas.
       - Se inicia en nivel "fácil".
       - Si el usuario responde 3 preguntas correctas consecutivas, la dificultad sube:
             "fácil" -> "normal" y "normal" -> "difícil".
-      - Las respuestas incorrectas no modifican la dificultad.
+      - Si el usuario responde de manera incorrecta, no hay cambio de dificultad
     """
     def __init__(self, db: Session):
         self.db = db

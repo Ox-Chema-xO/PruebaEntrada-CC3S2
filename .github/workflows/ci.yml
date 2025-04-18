@@ -14,6 +14,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
+      - name: Create .env file from GitHub secrets
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+          echo "ENVIRONMENT=testing" >> .env
+          echo "DEBUG=True" >> .env
+          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       

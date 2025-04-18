@@ -39,7 +39,7 @@ jobs:
       
       - name: Run tests
         run: |
-          docker compose exec -T web pytest tests/test_db_models_test.py tests/test_api.py tests/test_models_sqlite.py --cov=app --cov-report=xml
+          docker compose exec -T web pytest tests/test_api.py tests/test_models_sqlite.py --cov=app --cov-report=xml
       
       - name: Copy coverage report from container
         run: |

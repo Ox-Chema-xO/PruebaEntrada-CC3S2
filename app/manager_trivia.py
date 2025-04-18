@@ -19,7 +19,7 @@ class TriviaManagerDB:
     def __init__(self, db: Session):
         self.db = db
         self.quiz = None
-        self.total_questions = 0
+        self.total_questions = 10
         self.current_difficulty = 'fácil'  
         self.consecutive_correct = 0  
         self.current_question_index = 0
@@ -52,7 +52,7 @@ class TriviaManagerDB:
         
         random.shuffle(available_questions)
         selected_questions = available_questions[:10]
-        
+
         self.db.query(QuizQuestion).filter(QuizQuestion.quiz_id == self.quiz.id).delete()
         
         for i, question in enumerate(selected_questions):
@@ -98,11 +98,8 @@ class TriviaManagerDB:
         Returns:
             bool: True si hay más preguntas, False en caso contrario.
         """
-        total_questions = self.db.query(QuizQuestion).filter(
-            QuizQuestion.quiz_id == self.quiz.id
-        ).count()
         
-        return self.current_question_index < total_questions
+        return self.current_question_index < self.total_questions
 
     def get_next_question(self) -> Optional[Question]:
         """
@@ -141,7 +138,6 @@ class TriviaManagerDB:
         Returns:
             bool: True si la respuesta es correcta, False en caso contrario.
         """
-        self.total_questions += 1
         
         is_correct = question.is_correct(answer)
         
@@ -181,11 +177,10 @@ class TriviaManagerDB:
             DifficultyLevel.id == self.quiz.current_difficulty_id
         ).first()
         
-        total_questions = self.quiz.correct_answers + self.quiz.incorrect_answers
-        accuracy = round((self.quiz.correct_answers / total_questions) * 100, 2) if total_questions > 0 else 0
+        accuracy = round((self.quiz.correct_answers / self.total_questions) * 100, 2) 
         
         return {
-            "total_questions": total_questions,
+            "total_questions": self.total_questions,
             "correct_answers": self.quiz.correct_answers,
             "incorrect_answers": self.quiz.incorrect_answers,
             "current_difficulty": difficulty.name,
